@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+:root {
+  --accent: #FE5733;
+  --accent-2: #F96D38;
+  --accent-soft: rgba(254, 87, 51, 0.12);
+  --bg: #000000;
+  --surface: #111111;
+  --surface-raised: #1E1E1E;
+  --surface-high: #282828;
+  --border: #1F1F1F;
+  --text: #FFFFFF;
+  --text-muted: #9A9A9A;
+  --positive: #2ED573;
+  --negative: #FE5733;
+  --radius-card: 20px;
+  --radius-pill: 999px;
+  --on-accent: #FFFFFF;
+}
+
+[data-theme="light"] {
+  --bg: #F6F6F6;
+  --surface: #FFFFFF;
+  --surface-raised: #F8F4F1;
+  --surface-high: #FFFFFF;
+  --border: #D9DADE;
+  --text: #111111;
+  --text-muted: #6B6B6B;
+}
+
+@theme {
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-accent-soft: var(--accent-soft);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-high: var(--surface-high);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-muted: var(--text-muted);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+
+  --radius-card: var(--radius-card);
+  --radius-pill: var(--radius-pill);
+
+  --text-display: 34px;
+  --text-display--line-height: 1.2;
+  --text-display--font-weight: 600;
+
+  --text-h1: 22px;
+  --text-h1--line-height: 1.3;
+  --text-h1--font-weight: 600;
+
+  --text-body: 15px;
+  --text-body--line-height: 1.4;
+  --text-body--font-weight: 400;
+
+  --text-caption: 12px;
+  --text-caption--line-height: 1.4;
+  --text-caption--font-weight: 500;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  padding-bottom: calc(88px + env(safe-area-inset-bottom));
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+@media (min-width: 768px) {
+  body {
+    padding-bottom: 0;
+  }
+}
+
+.text-display {
+  font-size: 34px;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+.text-h1 {
+  font-size: 22px;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+.text-body {
+  font-size: 15px;
+  line-height: 1.4;
+  font-weight: 400;
+}
+
+.text-caption {
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 500;
+}
