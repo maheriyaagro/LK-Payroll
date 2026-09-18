@@ -61,13 +61,11 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="fixed z-50 md:hidden pointer-events-none"
+      className="fixed z-50 flex justify-center md:hidden pointer-events-none"
       style={{
         bottom: "calc(14px + env(safe-area-inset-bottom, 0px))",
         left: 0,
         right: 0,
-        display: "flex",
-        justifyContent: "center",
       }}
     >
       <div
