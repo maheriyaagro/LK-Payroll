@@ -1,7 +1,7 @@
 /**
  * build.js
  * Universal build script:
- * - On Vercel, CI, Linux, or environments without local NTFS mirror: runs standard `next build` directly.
+ * - On Vercel, CI, Linux, or environments without local NTFS mirror: runs standard `next build` directly via node.
  * - On local Windows with FAT32: syncs source to C:\Users\thesh\HajriBuild to bypass FAT32 symlink limitations.
  */
 const { execSync } = require("child_process");
@@ -13,8 +13,13 @@ const DEST = "C:\\Users\\thesh\\HajriBuild";
 
 // If in Vercel, CI, non-Windows, or destination mirror doesn't exist, run standard next build directly
 if (process.env.VERCEL || process.env.CI || process.platform !== "win32" || !fs.existsSync(DEST)) {
-  console.log("> Running standard next build...");
-  execSync("next build", { stdio: "inherit", cwd: SRC });
+  console.log("> Running standard next build via node...");
+  const nextBin = path.join(SRC, "node_modules", "next", "dist", "bin", "next");
+  if (fs.existsSync(nextBin)) {
+    execSync(`node "${nextBin}" build`, { stdio: "inherit", cwd: SRC });
+  } else {
+    execSync("npx next build", { stdio: "inherit", cwd: SRC });
+  }
   process.exit(0);
 }
 
