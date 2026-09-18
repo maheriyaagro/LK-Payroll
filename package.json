@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "node dev.js",
-    "build": "next build",
+    "build": "node node_modules/next/dist/bin/next build",
     "build:local": "node build.js",
     "start": "node node_modules/next/dist/bin/next start",
     "lint": "node node_modules/eslint/bin/eslint.js",
