@@ -1,0 +1,11 @@
+{
+  "rule": "pt",
+  "state": "MH",
+  "version": "2026.1",
+  "effective_from": "2020-01-01",
+  "verify_with_ca": true,
+  "todo": "TODO: User will fill in PT slabs by hand",
+  "params": {
+    "slabs": []
+  }
+}

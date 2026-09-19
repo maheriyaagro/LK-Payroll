@@ -14,12 +14,7 @@ import {
   CheckCircle2,
   Sparkles,
 } from "lucide-react";
-import {
-  attendanceWorkers,
-  payrollRecords,
-  type AttendanceWorker,
-  type EmployeePayroll,
-} from "@/lib/mock";
+import { createEmployeeAction } from "@/app/actions/employees";
 
 const COMMON_ROLES = [
   "Mason",
@@ -64,7 +59,7 @@ export default function AddEmployeePage() {
 
   const activeRole = role === "Other" ? customRole || "Worker" : role;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
       setErrorMessage("Please enter the employee's full name.");
@@ -74,57 +69,36 @@ export default function AddEmployeePage() {
     setErrorMessage("");
     setIsSubmitting(true);
 
-    const newId = String(Date.now());
-    const empCode = `EMP-0${attendanceWorkers.length + 101}`;
+    try {
+      const parsedAmount = parseInt(wageAmount.replace(/[^0-9]/g, ""), 10) || (wageType === "daily" ? 650 : 18000);
+      const wagePaise = parsedAmount * 100; // integer paise
 
-    // Add to attendance workers
-    const newWorker: AttendanceWorker = {
-      id: newId,
-      name: name.trim(),
-      role: activeRole,
-      initials: initials,
-      initialStatus: null, // pending
-    };
-    attendanceWorkers.push(newWorker);
+      const res = await createEmployeeAction({
+        name: name.trim(),
+        phone: phone.trim() ? `+91${phone.trim()}` : undefined,
+        designation: activeRole,
+        department: "Operations",
+        employment_type: wageType === "daily" ? "daily" : "monthly",
+        doj: joiningDate || new Date().toISOString().split("T")[0],
+        base_wage_paise: wagePaise,
+        bank_account_masked: bankAccount ? `•••• ${bankAccount.slice(-4)}` : undefined,
+      });
 
-    // Add to payroll records
-    const parsedAmount = parseInt(wageAmount.replace(/[^0-9]/g, ""), 10) || (wageType === "daily" ? 650 : 18000);
-    const monthlyPaise = wageType === "daily" ? parsedAmount * 26 * 100 : parsedAmount * 100;
+      if (!res.success) {
+        setErrorMessage(res.error || "Failed to create employee.");
+        setIsSubmitting(false);
+        return;
+      }
 
-    const newPayroll: EmployeePayroll = {
-      id: newId,
-      empCode,
-      name: name.trim(),
-      role: activeRole,
-      initials,
-      daysWorked: 0,
-      totalDays: 26,
-      netPayPaise: Math.round(monthlyPaise * 0.88),
-      bankAccount: bankAccount ? `•••• ${bankAccount.slice(-4)}` : "•••• 0000",
-      ifsc: ifsc || "SBIN0000001",
-      status: "Draft",
-      earnings: [
-        { id: "e1", label: "Basic Wage", amountPaise: Math.round(monthlyPaise * 0.8) },
-        { id: "e2", label: "Allowances", amountPaise: Math.round(monthlyPaise * 0.2) },
-      ],
-      deductions: [
-        {
-          id: "d1",
-          label: "Provident Fund (EPF)",
-          amountPaise: Math.round(monthlyPaise * 0.8 * 0.12),
-          explainer: "12% statutory basic wage contribution for retirement security.",
-        },
-      ],
-    };
-    payrollRecords.push(newPayroll);
-
-    setTimeout(() => {
       setIsSubmitting(false);
       setIsSuccess(true);
       setTimeout(() => {
-        router.push("/attendance");
-      }, 1500);
-    }, 600);
+        router.push("/employees");
+      }, 1200);
+    } catch (err: any) {
+      setErrorMessage(err.message || "An unexpected error occurred.");
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -171,14 +145,14 @@ export default function AddEmployeePage() {
             {name} Added Successfully!
           </h2>
           <p className="text-caption mt-1 mb-4" style={{ color: "var(--text-muted)" }}>
-            Added to Hajri register as <strong>{activeRole}</strong>. Redirecting to attendance...
+            Added to organization staff directory as <strong>{activeRole}</strong>. Redirecting to employee list...
           </p>
           <Link
-            href="/attendance"
+            href="/employees"
             className="text-sm font-semibold px-6 py-2.5 rounded-full"
             style={{ backgroundColor: "var(--accent)", color: "#FFFFFF" }}
           >
-            Go to Attendance Now
+            Go to Employee List
           </Link>
         </div>
       ) : (

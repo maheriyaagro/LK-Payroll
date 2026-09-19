@@ -32,6 +32,9 @@ const FILES = [
   "next-env.d.ts",
   ".npmrc",
   "package.json",
+  "middleware.ts",
+  ".env.local",
+  ".env",
 ];
 
 function run(cmd, opts = {}) {
@@ -39,14 +42,13 @@ function run(cmd, opts = {}) {
   execSync(cmd, { stdio: "inherit", ...opts });
 }
 
-// Clean destination src first
+// Sync source files using robocopy (exclude deleted phantom directories)
 const destSrc = path.join(DEST, "src");
-if (fs.existsSync(destSrc)) {
-  fs.rmSync(destSrc, { recursive: true, force: true });
+try {
+  execSync(`robocopy "${path.join(SRC, "src")}" "${destSrc}" /MIR /R:0 /W:0 /NP /NFL /NDL /NJH /NJS /XD "${path.join(SRC, "src", "app", "more")}" "${path.join(destSrc, "app", "more")}"`, { stdio: "inherit" });
+} catch (e) {
+  if (e.status >= 8) throw e;
 }
-
-// Sync source files
-run(`xcopy /E /I /Y "${path.join(SRC, "src")}" "${destSrc}"`);
 for (const f of FILES) {
   const src = path.join(SRC, f);
   try {

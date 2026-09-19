@@ -18,6 +18,9 @@ const CONFIG_FILES = [
   "next-env.d.ts",
   ".npmrc",
   "package.json",
+  "middleware.ts",
+  ".env.local",
+  ".env",
 ];
 
 function syncAll() {

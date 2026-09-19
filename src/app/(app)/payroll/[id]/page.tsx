@@ -18,6 +18,7 @@ import {
   formatPaise,
   type EmployeePayroll,
 } from "@/lib/mock";
+import { PayslipExplainerCard } from "@/components/payroll/PayslipExplainerCard";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -35,6 +36,25 @@ export default function PayslipDetailPage({ params }: PageProps) {
   const [expandedDeductions, setExpandedDeductions] = useState<Record<string, boolean>>({
     [employee.deductions[0]?.id || "d1"]: true,
   });
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownloadPdf = async () => {
+    try {
+      setDownloading(true);
+      const targetId = employeeId || employee.id;
+      const link = document.createElement("a");
+      link.href = `/api/payslip/${targetId}`;
+      link.setAttribute("download", `payslip-${employee.empCode}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error("Payslip PDF download failed:", err);
+      alert("Failed to download payslip PDF. Please try again.");
+    } finally {
+      setTimeout(() => setDownloading(false), 2000);
+    }
+  };
 
   const toggleDeduction = (id: string) => {
     setExpandedDeductions((prev: Record<string, boolean>) => ({
@@ -116,6 +136,9 @@ export default function PayslipDetailPage({ params }: PageProps) {
           </span>
         </div>
       </div>
+
+      {/* ── Month-over-Month Explainer Card (Top) ── */}
+      <PayslipExplainerCard employee={employee} />
 
       {/* ── 2. Responsive Layout (Breakdown on Left, Sticky Summary on Right at lg:) ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
@@ -350,8 +373,9 @@ export default function PayslipDetailPage({ params }: PageProps) {
             </button>
 
             <button
-              onClick={() => alert(`Downloading PDF payslip for ${employee.name}`)}
-              className="w-full flex items-center justify-center gap-2 font-semibold cursor-pointer active:scale-[0.99] transition-all"
+              onClick={handleDownloadPdf}
+              disabled={downloading}
+              className="w-full flex items-center justify-center gap-2 font-semibold cursor-pointer active:scale-[0.99] transition-all disabled:opacity-50"
               style={{
                 height: 48,
                 borderRadius: "var(--radius-pill)",
@@ -362,7 +386,7 @@ export default function PayslipDetailPage({ params }: PageProps) {
               }}
             >
               <Download size={18} />
-              <span>Download PDF</span>
+              <span>{downloading ? "Preparing PDF..." : "Download PDF"}</span>
             </button>
           </div>
         </div>
@@ -456,8 +480,9 @@ export default function PayslipDetailPage({ params }: PageProps) {
               </button>
 
               <button
-                onClick={() => alert(`Downloading PDF payslip for ${employee.name}`)}
-                className="w-full flex items-center justify-center gap-2 font-semibold cursor-pointer active:scale-[0.99] transition-all"
+                onClick={handleDownloadPdf}
+                disabled={downloading}
+                className="w-full flex items-center justify-center gap-2 font-semibold cursor-pointer active:scale-[0.99] transition-all disabled:opacity-50"
                 style={{
                   height: 44,
                   borderRadius: "var(--radius-pill)",
@@ -468,7 +493,7 @@ export default function PayslipDetailPage({ params }: PageProps) {
                 }}
               >
                 <Download size={17} />
-                <span>Download PDF</span>
+                <span>{downloading ? "Preparing PDF..." : "Download PDF"}</span>
               </button>
             </div>
           </div>

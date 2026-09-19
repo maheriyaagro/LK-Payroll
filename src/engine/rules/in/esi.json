@@ -1,0 +1,12 @@
+{
+  "rule": "esi",
+  "version": "2026.1",
+  "effective_from": "2020-01-01",
+  "verify_with_ca": true,
+  "params": {
+    "employee_rate_bps": 75,
+    "employer_rate_bps": 325,
+    "gross_ceiling_paise": 2100000,
+    "not_applicable_above_ceiling": true
+  }
+}

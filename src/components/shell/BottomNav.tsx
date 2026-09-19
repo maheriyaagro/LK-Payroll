@@ -23,32 +23,32 @@ export default function BottomNav() {
         href={item.href}
         className={`flex items-center justify-center transition-all duration-300 group ${
           isActive
-            ? "px-3.5 min-[400px]:px-4 min-[500px]:px-5 w-auto"
-            : "w-[38px] min-[400px]:w-[42px] min-[500px]:w-[46px]"
-        } h-[38px] min-[400px]:h-[42px] min-[500px]:h-[46px]`}
+            ? "px-4 min-[400px]:px-5 min-[500px]:px-6 w-auto"
+            : "w-[46px] min-[400px]:w-[50px] min-[500px]:w-[54px]"
+        } h-[46px] min-[400px]:h-[50px] min-[500px]:h-[54px]`}
         style={{
           borderRadius: "var(--radius-pill)",
           backgroundColor: isActive
             ? "var(--accent)"
-            : "rgba(255, 255, 255, 0.06)",
-          color: isActive ? "#FFFFFF" : "var(--text-muted)",
+            : "rgba(255, 255, 255, 0.08)",
+          color: isActive ? "#FFFFFF" : "rgba(255, 255, 255, 0.75)",
           boxShadow: isActive
-            ? "0 4px 14px rgba(254, 87, 51, 0.45)"
+            ? "0 4px 16px rgba(254, 87, 51, 0.45)"
             : "none",
         }}
         aria-label={item.label}
       >
-        <div className="flex items-center gap-1.5 min-[500px]:gap-2">
+        <div className="flex items-center gap-2">
           <Icon
-            strokeWidth={isActive ? 2.3 : 1.9}
+            strokeWidth={isActive ? 2.4 : 2.0}
             style={{
-              color: isActive ? "#FFFFFF" : "var(--text-muted)",
+              color: isActive ? "#FFFFFF" : "rgba(255, 255, 255, 0.78)",
             }}
-            className="w-[17px] h-[17px] min-[400px]:w-[18px] min-[400px]:h-[18px] min-[500px]:w-[20px] min-[500px]:h-[20px] shrink-0 transition-colors group-hover:text-white"
+            className="w-[20px] h-[20px] min-[400px]:w-[22px] min-[400px]:h-[22px] shrink-0 transition-colors group-hover:text-white"
           />
           {isActive && (
             <span
-              className="text-[11px] min-[400px]:text-xs min-[500px]:text-sm font-semibold tracking-wide whitespace-nowrap"
+              className="text-xs min-[400px]:text-sm font-bold tracking-wide whitespace-nowrap"
               style={{ color: "#FFFFFF" }}
             >
               {item.label}
@@ -63,20 +63,20 @@ export default function BottomNav() {
     <nav
       className="fixed z-50 flex justify-center md:hidden pointer-events-none"
       style={{
-        bottom: "calc(14px + env(safe-area-inset-bottom, 0px))",
+        bottom: "calc(16px + env(safe-area-inset-bottom, 0px))",
         left: 0,
         right: 0,
       }}
     >
       <div
-        className="pointer-events-auto flex items-center gap-1 min-[400px]:gap-1.5 min-[500px]:gap-2 p-1 min-[400px]:p-1.5 transition-all duration-300 shadow-2xl"
+        className="pointer-events-auto flex items-center gap-1.5 min-[400px]:gap-2 p-1.5 min-[400px]:p-2 transition-all duration-300 shadow-2xl"
         style={{
-          backgroundColor: "rgba(22, 22, 24, 0.92)",
+          background: "linear-gradient(180deg, rgba(32, 34, 40, 0.96) 0%, rgba(18, 20, 25, 0.98) 100%)",
           backdropFilter: "blur(24px)",
           WebkitBackdropFilter: "blur(24px)",
           borderRadius: "var(--radius-pill)",
-          border: "1px solid rgba(255, 255, 255, 0.12)",
-          boxShadow: "0 10px 36px rgba(0, 0, 0, 0.6), 0 2px 10px rgba(0, 0, 0, 0.4)",
+          border: "1px solid rgba(255, 255, 255, 0.16)",
+          boxShadow: "0 16px 40px rgba(0, 0, 0, 0.55), 0 4px 16px rgba(0, 0, 0, 0.35)",
         }}
       >
         {/* Navigation items: Home, Attendance, Payroll, More */}
@@ -87,35 +87,35 @@ export default function BottomNav() {
           href="/employees/new"
           className={`flex items-center justify-center transition-all duration-300 group ${
             isAddActive
-              ? "px-3.5 min-[400px]:px-4 min-[500px]:px-5 w-auto"
-              : "w-[38px] min-[400px]:w-[42px] min-[500px]:w-[46px]"
-          } h-[38px] min-[400px]:h-[42px] min-[500px]:h-[46px]`}
+              ? "px-4 min-[400px]:px-5 min-[500px]:px-6 w-auto"
+              : "w-[46px] min-[400px]:w-[50px] min-[500px]:w-[54px]"
+          } h-[46px] min-[400px]:h-[50px] min-[500px]:h-[54px]`}
           style={{
             borderRadius: "var(--radius-pill)",
             backgroundColor: isAddActive
               ? "var(--accent)"
-              : "rgba(254, 87, 51, 0.16)",
+              : "rgba(254, 87, 51, 0.22)",
             border: isAddActive
               ? "1px solid transparent"
-              : "1px solid rgba(254, 87, 51, 0.38)",
-            color: isAddActive ? "#FFFFFF" : "var(--accent)",
+              : "1px solid rgba(254, 87, 51, 0.5)",
+            color: isAddActive ? "#FFFFFF" : "#FF7A59",
             boxShadow: isAddActive
-              ? "0 4px 14px rgba(254, 87, 51, 0.45)"
-              : "0 2px 8px rgba(254, 87, 51, 0.2)",
+              ? "0 4px 16px rgba(254, 87, 51, 0.45)"
+              : "0 2px 10px rgba(254, 87, 51, 0.25)",
           }}
           aria-label="Add new employee"
         >
-          <div className="flex items-center gap-1.5 min-[500px]:gap-2">
+          <div className="flex items-center gap-2">
             <Plus
-              strokeWidth={2.4}
+              strokeWidth={2.5}
               style={{
-                color: isAddActive ? "#FFFFFF" : "var(--accent)",
+                color: isAddActive ? "#FFFFFF" : "#FF7A59",
               }}
-              className="w-[17px] h-[17px] min-[400px]:w-[19px] min-[400px]:h-[19px] min-[500px]:w-[21px] min-[500px]:h-[21px] shrink-0 transition-transform group-hover:scale-110"
+              className="w-[20px] h-[20px] min-[400px]:w-[22px] min-[400px]:h-[22px] shrink-0 transition-transform group-hover:scale-110"
             />
             {isAddActive && (
               <span
-                className="text-[11px] min-[400px]:text-xs min-[500px]:text-sm font-semibold tracking-wide whitespace-nowrap"
+                className="text-xs min-[400px]:text-sm font-bold tracking-wide whitespace-nowrap"
                 style={{ color: "#FFFFFF" }}
               >
                 Add

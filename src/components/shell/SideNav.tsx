@@ -108,17 +108,28 @@ export default function SideNav() {
         >
           U
         </div>
-        <div className="flex flex-col">
+        <div className="flex flex-col flex-1 min-w-0">
           <span
-            className="text-body"
+            className="text-body truncate"
             style={{ color: "var(--text)", fontWeight: 500 }}
           >
-            User
+            Organization
           </span>
           <span className="text-caption" style={{ color: "var(--text-muted)" }}>
-            Admin
+            Owner
           </span>
         </div>
+        <form action="/api/auth/signout" method="POST">
+          <button
+            type="submit"
+            title="Log Out"
+            className="p-1.5 rounded-lg hover:bg-[var(--surface-high)] text-[var(--text-muted)] hover:text-[var(--negative)] transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </button>
+        </form>
       </div>
     </aside>
   );

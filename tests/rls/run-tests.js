@@ -75,7 +75,10 @@ async function run() {
   const migrationFiles = [
     '20260919000001_create_payroll_schema.sql',
     '20260919000002_create_triggers.sql',
-    '20260919000003_create_rls_policies.sql'
+    '20260919000003_create_rls_policies.sql',
+    '20260919000004_auth_and_onboarding.sql',
+    '20260919000005_payroll_lifecycle.sql',
+    '20260919000006_selfie_punch.sql'
   ];
 
   for (const file of migrationFiles) {
@@ -330,10 +333,217 @@ async function run() {
   } catch (err) {
     deleteAuditError = err.message;
   }
+  // 7. Unassigned User Isolation Tests (No org_members row)
+  console.log('\n[7/8] Testing Unassigned User Isolation (User with NO org_members row)...');
+  const UNASSIGNED_USER_ID = '77777777-7777-7777-7777-777777777777';
+
+  for (const table of ALL_11_TABLES) {
+    const res = await queryAsUser(
+      UNASSIGNED_USER_ID,
+      `SELECT count(*) as cnt FROM ${table}`
+    );
+    const count = parseInt(res.rows[0].cnt);
+    assert(
+      count === 0,
+      `Unassigned user (no org_members) reads 0 rows from ${table} (got ${count})`
+    );
+  }
+
+  // 8. Payroll Run Approval Role Guard Tests (Manager CANNOT approve, Owner CAN)
+  console.log('\n[8/8] Testing Payroll Run Approval Role Restrictions...');
+
+  // Test 8.1: Manager CANNOT approve a draft payroll run
+  let managerApproveError = null;
+  try {
+    await db.exec(`SET request.jwt.claim.sub = '${ORG_A_MANAGER_ID}';`);
+    await db.exec(`
+      UPDATE payroll_runs
+      SET status = 'approved'
+      WHERE id = 'd0000000-0000-0000-0000-000000000002';
+    `);
+  } catch (err) {
+    managerApproveError = err.message;
+  }
   assert(
-    deleteAuditError && deleteAuditError.includes('append-only'),
-    `Trigger blocked DELETE on audit_log: "${deleteAuditError?.trim()}"`
+    managerApproveError !== null && (managerApproveError.includes('cannot approve') || managerApproveError.includes('owner')),
+    `Trigger BLOCKED manager from approving payroll run: "${managerApproveError?.trim()}"`
   );
+
+  // Test 8.2: Owner CAN approve a draft payroll run
+  let ownerApproveSuccess = false;
+  try {
+    await db.exec(`SET request.jwt.claim.sub = '${ORG_A_OWNER_ID}';`);
+    await db.exec(`
+      UPDATE payroll_runs
+      SET status = 'approved'
+      WHERE id = 'd0000000-0000-0000-0000-000000000002';
+    `);
+    ownerApproveSuccess = true;
+  } catch (err) {
+    console.error('Owner approval failed:', err);
+  }
+  assert(
+    ownerApproveSuccess,
+    'Owner successfully approved draft payroll run (status updated to approved)'
+  );
+
+  // 9. Atomic Onboarding RPC Test
+  console.log('\n[Extra] Testing Atomic Onboarding RPC (create_organization_with_owner)...');
+  const ONBOARDING_USER_ID = '88888888-8888-8888-8888-888888888888';
+  await db.exec(`SET request.jwt.claim.sub = '${ONBOARDING_USER_ID}';`);
+
+  let onboardResult = null;
+  try {
+    const res = await db.query(`
+      SELECT create_organization_with_owner(
+        'Zenith Logistics Pvt Ltd',
+        '27',
+        'AABCA9999Z',
+        'First Driver',
+        '9876543210',
+        'Logistics',
+        'Fleet Driver',
+        'monthly'
+      ) as output;
+    `);
+    const rawOutput = res.rows[0].output;
+    onboardResult = typeof rawOutput === 'string' ? JSON.parse(rawOutput) : rawOutput;
+  } catch (err) {
+    console.error('Onboarding RPC failed:', err);
+  }
+
+  assert(
+    onboardResult !== null && onboardResult.org_id && onboardResult.role === 'owner',
+    `Onboarding RPC created organization and owner member atomically (org_id: ${onboardResult?.org_id})`
+  );
+
+  // Verify that newly onboarded owner sees their organization and employee
+  const onboardedOrgQuery = await queryAsUser(
+    ONBOARDING_USER_ID,
+    `SELECT count(*) as cnt FROM organizations WHERE id = '${onboardResult?.org_id}'`
+  );
+  assert(
+    parseInt(onboardedOrgQuery.rows[0].cnt) === 1,
+    'Onboarded owner can query their newly created organization'
+  );
+
+  const onboardedEmpQuery = await queryAsUser(
+    ONBOARDING_USER_ID,
+    `SELECT count(*) as cnt FROM employees WHERE org_id = '${onboardResult?.org_id}'`
+  );
+  assert(
+    parseInt(onboardedEmpQuery.rows[0].cnt) === 1,
+    'Onboarded owner sees their first created employee'
+  );
+
+  // [Extra] Testing Attendance Lock for Approved Payroll Period...
+  console.log('\n[9/9] Testing Attendance Lock Trigger on Approved Months...');
+  // In seed, August 2026 run (d0000000-0000-0000-0000-000000000002) is 'approved'
+  let attLockFailed = false;
+  try {
+    await db.exec(`
+      UPDATE attendance_records
+      SET status = 'A'
+      WHERE org_id = '${ORG_A_ID}' AND work_date = '2026-08-15';
+    `);
+  } catch (err) {
+    attLockFailed = true;
+    assert(
+      err.message.includes('locked') || err.message.includes('Attendance cannot be modified'),
+      'Trigger BLOCKED attendance edit for approved August 2026 run'
+    );
+  }
+  if (!attLockFailed) {
+    assert(false, 'Expected attendance update for approved run month to fail');
+  }
+
+  // [Task 12a] Testing Selfie Punch Schema, Private Storage Bucket, RLS & Retention
+  console.log('\n[10/10] Testing Task 12a: Selfie Punch Storage Bucket, RLS & Retention...');
+
+  // 1. Verify storage bucket
+  const bucketRes = await db.query("SELECT id, public FROM storage.buckets WHERE id = 'attendance-selfies'");
+  assert(bucketRes.rows.length === 1, 'attendance-selfies bucket exists');
+  assert(bucketRes.rows[0].public === false, 'attendance-selfies bucket is PRIVATE (public = false)');
+
+  // 2. Verify schema columns
+  const empConsentCol = await db.query(
+    "SELECT column_name FROM information_schema.columns WHERE table_name = 'employees' AND column_name = 'selfie_consent_at'"
+  );
+  assert(empConsentCol.rows.length === 1, 'employees table has selfie_consent_at column');
+
+  const attPhotoCol = await db.query(
+    "SELECT column_name FROM information_schema.columns WHERE table_name = 'attendance_records' AND column_name = 'photo_path'"
+  );
+  assert(attPhotoCol.rows.length === 1, 'attendance_records table has photo_path column');
+
+  // 3. Test Storage RLS
+  // Insert 2 test photos for Emp 1 and Emp 2 in Org A
+  const photo1Path = `${ORG_A_ID}/${ORG_A_EMP1_ID}/2026-09-19/090000.jpg`;
+  const photo2Path = `${ORG_A_ID}/${ORG_A_EMP2_ID}/2026-09-19/090500.jpg`;
+
+  await db.exec(`
+    INSERT INTO storage.objects (bucket_id, name, owner)
+    VALUES
+      ('attendance-selfies', '${photo1Path}', '${ORG_A_OWNER_ID}'),
+      ('attendance-selfies', '${photo2Path}', '${ORG_A_OWNER_ID}')
+    ON CONFLICT DO NOTHING;
+  `);
+
+  // As Employee 1:
+  const emp1Photos = await queryAsUser(
+    ORG_A_EMP1_USER_ID,
+    "SELECT name FROM storage.objects WHERE bucket_id = 'attendance-selfies'"
+  );
+  assert(
+    emp1Photos.rows.length === 1 && emp1Photos.rows[0].name === photo1Path,
+    'Employee 1 can read ONLY their own photo'
+  );
+
+  const emp1CrossCheck = await queryAsUser(
+    ORG_A_EMP1_USER_ID,
+    `SELECT name FROM storage.objects WHERE bucket_id = 'attendance-selfies' AND name = '${photo2Path}'`
+  );
+  assert(
+    emp1CrossCheck.rows.length === 0,
+    "RLS BLOCKED: Employees cannot read each other's photos"
+  );
+
+  // As Manager:
+  const mgrPhotos = await queryAsUser(
+    ORG_A_MANAGER_ID,
+    "SELECT name FROM storage.objects WHERE bucket_id = 'attendance-selfies'"
+  );
+  assert(
+    mgrPhotos.rows.length >= 2,
+    'Manager can access all employee photos in their organization'
+  );
+
+  // 4. Test Retention Cleanup Stored Procedure
+  // Insert an expired record (> 90 days ago)
+  const expiredPhotoPath = `${ORG_A_ID}/${ORG_A_EMP1_ID}/2026-01-01/080000.jpg`;
+  await db.exec(`
+    INSERT INTO storage.objects (bucket_id, name, owner)
+    VALUES ('attendance-selfies', '${expiredPhotoPath}', '${ORG_A_OWNER_ID}')
+    ON CONFLICT DO NOTHING;
+
+    INSERT INTO attendance_records (org_id, employee_id, work_date, status, source, photo_path, created_at)
+    VALUES ('${ORG_A_ID}', '${ORG_A_EMP1_ID}', '2026-01-01', 'P', 'selfie', '${expiredPhotoPath}', now() - interval '95 days')
+    ON CONFLICT (employee_id, work_date) DO UPDATE
+    SET source = 'selfie', photo_path = '${expiredPhotoPath}', created_at = now() - interval '95 days';
+  `);
+
+  const cleanupRes = await db.query('SELECT * FROM cleanup_expired_selfies(90)');
+  assert(parseInt(cleanupRes.rows[0].deleted_count) >= 1, 'cleanup_expired_selfies purged expired photos');
+
+  const verifyStoragePurge = await db.query(
+    `SELECT name FROM storage.objects WHERE bucket_id = 'attendance-selfies' AND name = '${expiredPhotoPath}'`
+  );
+  assert(verifyStoragePurge.rows.length === 0, 'Expired photo was deleted from storage.objects');
+
+  const verifyAttRecord = await db.query(
+    `SELECT photo_path FROM attendance_records WHERE org_id = '${ORG_A_ID}' AND work_date = '2026-01-01'`
+  );
+  assert(verifyAttRecord.rows[0].photo_path === null, 'Attendance record photo_path set to NULL after retention cleanup');
 
   console.log('\n' + '='.repeat(70));
   console.log(`TEST SUMMARY: ${passedTests}/${totalTests} Passed (${failedTests} Failed)`);

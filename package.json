@@ -4,13 +4,19 @@
   "private": true,
   "scripts": {
     "dev": "node dev.js",
-    "build": "node node_modules/next/dist/bin/next build",
+    "build": "node build.js",
     "build:local": "node build.js",
     "start": "node node_modules/next/dist/bin/next start",
     "lint": "node node_modules/eslint/bin/eslint.js",
-    "test:rls": "node tests/rls/run-tests.js"
+    "test:rls": "node tests/rls/run-tests.js",
+    "test:engine": "node tests/engine/run-engine-tests.js",
+    "test:whatsapp": "node tests/whatsapp/run-whatsapp-tests.js",
+    "test:privacy": "node tests/privacy/run-privacy-tests.js"
   },
   "dependencies": {
+    "@react-pdf/renderer": "^4.3.0",
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.49.1",
     "lucide-react": "^1.47.0",
     "next": "16.3.5",
     "react": "19.2.8",

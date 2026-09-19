@@ -1,0 +1,12 @@
+{
+  "rule": "pf",
+  "version": "2026.1",
+  "effective_from": "2020-01-01",
+  "verify_with_ca": true,
+  "params": {
+    "employee_rate_bps": 1200,
+    "employer_rate_bps": 1200,
+    "wage_ceiling_paise": 1500000,
+    "ceiling_applies_to": ["BASIC", "DA"]
+  }
+}

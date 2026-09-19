@@ -1,6 +1,44 @@
 @import "tailwindcss";
 
+/* Hide Next.js dev indicator overlay so it does not obscure top navigation or action buttons */
+nextjs-portal {
+  display: none !important;
+}
+
 :root {
+  --accent: #FE5733;
+  --accent-2: #F96D38;
+  --accent-soft: rgba(254, 87, 51, 0.10);
+  --bg: #F8F9FB;
+  --surface: #FFFFFF;
+  --surface-raised: #F1F3F6;
+  --surface-high: #E8EBF0;
+  --border: #E5E7EB;
+  --text: #111827;
+  --text-muted: #64748B;
+  --positive: #10B981;
+  --negative: #EF4444;
+  --radius-card: 20px;
+  --radius-pill: 999px;
+  --on-accent: #FFFFFF;
+}
+
+[data-theme="light"] {
+  --accent: #FE5733;
+  --accent-2: #F96D38;
+  --accent-soft: rgba(254, 87, 51, 0.10);
+  --bg: #F8F9FB;
+  --surface: #FFFFFF;
+  --surface-raised: #F1F3F6;
+  --surface-high: #E8EBF0;
+  --border: #E5E7EB;
+  --text: #111827;
+  --text-muted: #64748B;
+  --positive: #10B981;
+  --negative: #EF4444;
+}
+
+[data-theme="dark"] {
   --accent: #FE5733;
   --accent-2: #F96D38;
   --accent-soft: rgba(254, 87, 51, 0.12);
@@ -13,19 +51,6 @@
   --text-muted: #9A9A9A;
   --positive: #2ED573;
   --negative: #FE5733;
-  --radius-card: 20px;
-  --radius-pill: 999px;
-  --on-accent: #FFFFFF;
-}
-
-[data-theme="light"] {
-  --bg: #F6F6F6;
-  --surface: #FFFFFF;
-  --surface-raised: #F8F4F1;
-  --surface-high: #FFFFFF;
-  --border: #D9DADE;
-  --text: #111111;
-  --text-muted: #6B6B6B;
 }
 
 @theme {
