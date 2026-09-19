@@ -20,30 +20,37 @@ export async function loginWithPassword(formData: FormData) {
     return { error: `Too many login attempts. Please wait ${waitMins} minute(s) before trying again.` };
   }
 
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-  if (error) {
-    return { error: error.message };
+    if (error) {
+      return { error: error.message };
+    }
+
+    if (!data?.user) {
+      return { error: 'Unable to authenticate. Please check your credentials.' };
+    }
+
+    // Check if member has an organization
+    const { data: member } = await supabase
+      .from('org_members')
+      .select('org_id')
+      .eq('user_id', data.user.id)
+      .limit(1)
+      .maybeSingle();
+
+    if (!member?.org_id) {
+      redirect('/onboarding');
+    }
+
+    redirect('/');
+  } catch (err: any) {
+    if (err?.digest?.startsWith('NEXT_REDIRECT') || err?.message === 'NEXT_REDIRECT') {
+      throw err;
+    }
+    return { error: err?.message || 'Authentication service error. Please try again.' };
   }
-
-  if (!data?.user) {
-    return { error: 'Unable to authenticate. Please check your credentials.' };
-  }
-
-  // Check if member has an organization
-  const { data: member } = await supabase
-    .from('org_members')
-    .select('org_id')
-    .eq('user_id', data.user.id)
-    .limit(1)
-    .maybeSingle();
-
-  if (!member?.org_id) {
-    redirect('/onboarding');
-  }
-
-  redirect('/');
 }
 
 export async function signupWithPassword(formData: FormData) {
@@ -61,24 +68,31 @@ export async function signupWithPassword(formData: FormData) {
     return { error: `Too many signup attempts. Please wait ${waitMins} minute(s) before trying again.` };
   }
 
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-  });
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
 
-  if (error) {
-    return { error: error.message };
+    if (error) {
+      return { error: error.message };
+    }
+
+    if (data?.session) {
+      redirect('/onboarding');
+    }
+
+    return {
+      success: true,
+      message: 'Account created! If email confirmation is enabled on your project, please check your inbox to confirm.',
+    };
+  } catch (err: any) {
+    if (err?.digest?.startsWith('NEXT_REDIRECT') || err?.message === 'NEXT_REDIRECT') {
+      throw err;
+    }
+    return { error: err?.message || 'Unable to connect to authentication service. Please try again.' };
   }
-
-  if (data?.session) {
-    redirect('/onboarding');
-  }
-
-  return {
-    success: true,
-    message: 'Account created! If email confirmation is enabled on your project, please check your inbox to confirm.',
-  };
 }
 
 export async function signOutAction() {
